@@ -7,6 +7,7 @@ on:
     branches: [ 'main' ]
   release:
     types: [ published ]
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -28,9 +29,9 @@ jobs:
       matrix:
         versions:
           # renovate: datasource=docker depName=registry.developers.crunchydata.com/crunchydata/crunchy-postgres
-          - "ubi9-16.8-2516"
+          - "ubi9-17.7-2550"
           # renovate: datasource=docker depName=registry.developers.crunchydata.com/crunchydata/crunchy-postgres
-          - "ubi9-17.4-2516"
+          - "ubi9-18.1-2550"
 
     runs-on: ubuntu-latest
     steps:
