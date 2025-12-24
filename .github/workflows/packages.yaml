@@ -21,6 +21,7 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository_owner }}/cdpgvectorchord
+  UPGRADE_IMAGE_NAME: ${{ github.repository_owner }}/cdpgvectorchord-upgrade
 
 jobs:
   postgres:
@@ -56,6 +57,7 @@ jobs:
         with:
           files: |
             Dockerfile
+            Dockerfile.upgrade
             .github/workflows/packages.yaml
             app/pgvectors.sql
 
@@ -107,3 +109,33 @@ jobs:
           build-args: |
             PG_MAJOR=${{ steps.version.outputs.PG_MAJOR }}
             CRUNCHYDATA_VERSION=${{ matrix.versions }}
+
+      - name: Generate docker upgrade image tags
+        id: metadata-upgrade
+        uses: docker/metadata-action@v5
+        with:
+          flavor: |
+            latest=false
+          images: ${{ env.REGISTRY }}/${{ env.UPGRADE_IMAGE_NAME }}
+          tags: |
+            type=ref,event=pr
+            type=raw,value=${{ matrix.versions }}-${{ env.VECTORCHORD_TAG }},enable=${{ steps.should-release.outputs.result }}
+            type=raw,value=${{ steps.version.outputs.PG_MAJOR }}-${{ env.VECTORCHORD_TAG }},enable=${{ steps.should-release.outputs.result }}
+            type=raw,value=${{ matrix.versions }},enable=${{ steps.should-release.outputs.result }}
+            type=raw,value=${{ steps.version.outputs.PG_MAJOR }},enable=${{ steps.should-release.outputs.result }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          file: Dockerfile.upgrade
+          push: ${{ !github.event.pull_request.head.repo.fork && steps.metadata.outputs.tags != '' }}
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.metadata-upgrade.outputs.tags }}
+          labels: ${{ steps.metadata-upgrade.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+          build-args: |
+            PG_MAJOR=${{ steps.version.outputs.PG_MAJOR }}
+            CRUNCHYDATA_VERSION=${{ matrix.versions }}
+
