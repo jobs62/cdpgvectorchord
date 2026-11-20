@@ -11,7 +11,7 @@ WORKDIR /tmp
 ARG POSTGRES_UPGRADE_VERSIONS="15 16 17 18"
 ARG TARGETARCH
 # renovate: datasource=github-releases depName=tensorchord/VectorChord
-ARG VECTORCHORD_TAG=1.0.0
+ARG VECTORCHORD_TAG=1.1.1
 
 
 RUN <<-SHELL
